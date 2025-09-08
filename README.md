@@ -81,3 +81,31 @@ flowchart LR
   Core --> Logs[Logs / Telemetria]
   Vision --> Knowledge[Knowledge Base / Heurísticas]
 ```
+
+  ---
+
+  ## Brainstorm & roadmap resumido
+
+  Este repositório contém a especificação inicial e materiais de apoio para o projeto "Obelisk" — um agente multimodal para Windows com visão, automação de input e capacidade controlada de atualização automática.
+
+  Arquivos-chave em `instructions/`:
+
+  - `brainstorm_obelisk.md` — brainstorm técnico, arquitetura proposta, riscos e roadmap.
+  - `doc_policy.json` — template de políticas de uso e limites éticos.
+  - `doc_roles.json` — perfis e permissões (dev, admin, user).
+  - `doc_update_flow.json` — fluxo recomendado de atualização (assinatura, revisão, rollback).
+  - demais `doc_*.json` — documentos de design, arquitetura e operação já presentes na pasta.
+
+  Segurança e abordagem recomendada:
+
+  - Implementar sempre um modo "dry-run" ou "suggested plan" antes de executar comandos que alterem o sistema.
+  - Atualizações de código devem passar por assinatura criptográfica e aprovação humana antes do deploy automático.
+  - Permissões devem ser gerenciadas por perfis (roles) e feature-flags para bloquear capacidades perigosas por padrão.
+
+  Próximos passos rápidos:
+
+  1. Revisar `instructions/brainstorm_obelisk.md` para priorizar features.
+  2. Implementar protótipo CLI "dry-run" que recebe "faça isso: ..." e retorna um plano.
+  3. Criar testes/sandbox para validar executores de automação sem risco.
+
+  ---
