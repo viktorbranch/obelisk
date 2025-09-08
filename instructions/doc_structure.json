@@ -1,0 +1,87 @@
+[
+  {
+    "documento": "doc_style.csv",
+    "tipo": "Design",
+    "finalidade": "Define parâmetros de design, identidade visual, cores, tipografia e tom de voz."
+  },
+  {
+    "documento": "doc_ui.csv",
+    "tipo": "Design",
+    "finalidade": "Regras de interface, padrões de interação e componentes visuais."
+  },
+  {
+    "documento": "doc_persona.csv",
+    "tipo": "Design",
+    "finalidade": "Características e personalidade do agente, incluindo limites de linguagem."
+  },
+  {
+    "documento": "doc_flowchart.csv",
+    "tipo": "Arquitetura",
+    "finalidade": "Fluxograma de navegação e estados do agente."
+  },
+  {
+    "documento": "doc_intents.csv",
+    "tipo": "Arquitetura",
+    "finalidade": "Lista de intenções (intents), gatilhos e respostas."
+  },
+  {
+    "documento": "doc_context.csv",
+    "tipo": "Arquitetura",
+    "finalidade": "Regras de uso de contexto e memória."
+  },
+  {
+    "documento": "doc_knowledge.csv",
+    "tipo": "Arquitetura",
+    "finalidade": "Fontes de conhecimento externas e bases de dados."
+  },
+  {
+    "documento": "doc_logs.csv",
+    "tipo": "Operação",
+    "finalidade": "Estrutura de logging (entrada, saída, erros, feedback)."
+  },
+  {
+    "documento": "doc_errors.csv",
+    "tipo": "Operação",
+    "finalidade": "Catálogo de erros comuns e estratégias de fallback."
+  },
+  {
+    "documento": "doc_prompts.csv",
+    "tipo": "Operação",
+    "finalidade": "Coleção de prompts prontos e templates de mensagens."
+  },
+  {
+    "documento": "doc_config.csv",
+    "tipo": "Configuração",
+    "finalidade": "Parâmetros de funcionamento do agente (tokens, temperatura etc.)."
+  },
+  {
+    "documento": "doc_eval.csv",
+    "tipo": "Avaliação",
+    "finalidade": "Métricas de desempenho e feedback do usuário."
+  },
+  {
+    "documento": "doc_testing.csv",
+    "tipo": "Avaliação",
+    "finalidade": "Casos de teste e cenários de simulação."
+  },
+  {
+    "documento": "doc_versions.csv",
+    "tipo": "Controle",
+    "finalidade": "Histórico de versões e mudanças relevantes."
+  },
+  {
+    "documento": "doc_policy.csv",
+    "tipo": "Governança",
+    "finalidade": "Políticas de uso, limites éticos e de segurança."
+  },
+  {
+    "documento": "doc_privacy.csv",
+    "tipo": "Governança",
+    "finalidade": "Diretrizes de privacidade e tratamento de dados."
+  },
+  {
+    "documento": "doc_roles.csv",
+    "tipo": "Governança",
+    "finalidade": "Perfis de acesso e permissões (dev, admin, user)."
+  }
+]
