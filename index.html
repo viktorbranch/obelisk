@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Obelisk AI</title>
+    <link rel="stylesheet" href="css/chat.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-content">
+                <div class="title-section">
+                    <div class="title-main">
+                        <h1>OBELISK</h1>
+                        <span>AI Agent</span>
+                    </div>
+                    <div class="status">
+                        <div class="status-dot"></div>
+                        <span>Sistema Online</span>
+                    </div>
+                </div>
+            </div>
+            <button class="close-btn" id="closeBtn">×</button>
+        </div>
+        
+        <div class="chat-container" id="chatContainer">
+            <div class="message ai">
+                <div class="message-avatar">
+                    <img src="assets/img/logo.png" alt="Obelisk">
+                </div>
+                <div class="message-content">
+                    Olá! Eu sou o Obelisk AI. Como posso ajudar você hoje?
+                </div>
+            </div>
+        </div>
+        
+        <div class="input-container">
+            <div class="input-wrapper">
+                <input 
+                    type="text" 
+                    class="input-field" 
+                    id="messageInput" 
+                    placeholder="Digite sua mensagem..."
+                    autocomplete="off"
+                >
+            </div>
+            <button class="send-btn" id="sendBtn">➤</button>
+        </div>
+    </div>
+    
+    <script>
+        const { ipcRenderer } = require('electron');
+        
+        const chatContainer = document.getElementById('chatContainer');
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const closeBtn = document.getElementById('closeBtn');
+        
+        let isProcessing = false;
+        
+        // Focus automático
+        messageInput.focus();
+        
+        // Fechar
+        closeBtn.addEventListener('click', () => {
+            ipcRenderer.send('close-chat');
+        });
+        
+        // Enter para enviar
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !isProcessing) {
+                sendMessage();
+            }
+        });
+        
+        // Botão enviar
+        sendBtn.addEventListener('click', () => {
+            if (!isProcessing) {
+                sendMessage();
+            }
+        });
+        
+        function addMessage(content, isUser = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user' : 'ai'}`;
+            
+            const avatar = document.createElement('div');
+            avatar.className = 'message-avatar';
+            
+            if (isUser) {
+                avatar.textContent = '👤';
+            } else {
+                const logoImg = document.createElement('img');
+                logoImg.src = 'assets/img/logo.png';
+                logoImg.alt = 'Obelisk';
+                avatar.appendChild(logoImg);
+            }
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            contentDiv.textContent = content;
+            
+            messageDiv.appendChild(avatar);
+            messageDiv.appendChild(contentDiv);
+            
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            
+            return contentDiv;
+        }
+        
+        function showTyping() {
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'message ai';
+            typingDiv.id = 'typingIndicator';
+            
+            const avatar = document.createElement('div');
+            avatar.className = 'message-avatar';
+            const logoImg = document.createElement('img');
+            logoImg.src = 'assets/img/logo.png';
+            logoImg.alt = 'Obelisk';
+            avatar.appendChild(logoImg);
+            
+            const indicator = document.createElement('div');
+            indicator.className = 'message-content typing-indicator active';
+            indicator.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+            
+            typingDiv.appendChild(avatar);
+            typingDiv.appendChild(indicator);
+            
+            chatContainer.appendChild(typingDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+        
+        function hideTyping() {
+            const typing = document.getElementById('typingIndicator');
+            if (typing) {
+                typing.remove();
+            }
+        }
+        
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            
+            if (!message || isProcessing) return;
+            
+            isProcessing = true;
+            sendBtn.disabled = true;
+            
+            // Marca tempo de início
+            const startTime = Date.now();
+            
+            // Adiciona mensagem do usuário
+            addMessage(message, true);
+            messageInput.value = '';
+            
+            // Mostra indicador com status
+            showTyping();
+            
+            try {
+                // Timeout de 35 segundos (primeira execução pode demorar)
+                const timeout = new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('Timeout: mais de 35s esperando resposta')), 35000)
+                );
+                
+                const messagePromise = ipcRenderer.invoke('send-message', message);
+                const response = await Promise.race([messagePromise, timeout]);
+                
+                // Calcula tempo de resposta
+                const responseTime = ((Date.now() - startTime) / 1000).toFixed(1);
+                console.log(`⏱️ Tempo de resposta: ${responseTime}s`);
+                
+                hideTyping();
+                
+                if (response.status === 'success') {
+                    addMessage(response.message);
+                } else {
+                    addMessage('❌ ' + response.message);
+                }
+            } catch (error) {
+                hideTyping();
+                if (error.message.includes('Timeout')) {
+                    addMessage('❌ Timeout: O Ollama demorou muito para responder. Verifique se o serviço está rodando (ollama serve).');
+                } else {
+                    addMessage('❌ Erro ao processar mensagem: ' + error.message);
+                }
+                console.error(error);
+            }
+            
+            isProcessing = false;
+            sendBtn.disabled = false;
+            messageInput.focus();
+        }
+    </script>
+</body>
+</html>

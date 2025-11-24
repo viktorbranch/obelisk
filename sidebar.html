@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="css/sidebar.css">
+</head>
+<body>
+    <div class="indicator"></div>
+    
+    <script>
+        const { ipcRenderer } = require('electron');
+        
+        document.body.addEventListener('click', () => {
+            ipcRenderer.send('toggle-chat');
+        });
+    </script>
+</body>
+</html>

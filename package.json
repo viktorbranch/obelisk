@@ -1,0 +1,50 @@
+{
+  "name": "obelisk-ai",
+  "version": "1.0.0",
+  "description": "Obelisk AI - Assistente inteligente com sidebar moderna",
+  "main": "scripts/main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win --x64",
+    "pack": "electron-builder --dir"
+  },
+  "keywords": [
+    "ai",
+    "assistant",
+    "electron"
+  ],
+  "author": "Obelisk Team",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1"
+  },
+  "dependencies": {
+    "axios": "^1.6.2",
+    "screenshot-desktop": "^1.15.3",
+    "sharp": "^0.34.5"
+  },
+  "build": {
+    "appId": "com.obelisk.ai",
+    "productName": "Obelisk AI",
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "portable": {
+      "artifactName": "ObeliskAI-Portable.exe"
+    },
+    "files": [
+      "**/*",
+      "!src/**/*",
+      "!.git/**/*",
+      "!dist/**/*"
+    ]
+  }
+}

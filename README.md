@@ -1,25 +1,28 @@
 # 🤖 Obelisk AI - Autonomous Computer Agent
 
-**Obelisk** is a fully autonomous AI agent powered by Ollama that can see, think, and act on your computer with complete independence.
+**Obelisk** é um agente de IA totalmente autônomo com capacidade de VER, PENSAR e AGIR no seu computador.
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue)
-![Python](https://img.shields.io/badge/python-3.8%2B-green)
+![Version](https://img.shields.io/badge/version-2.0.0-blue)
+![JavaScript](https://img.shields.io/badge/javascript-ES6+-yellow)
 ![License](https://img.shields.io/badge/license-MIT-purple)
-![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
+![Platform](https://img.shields.io/badge/platform-Windows-lightgrey)
 
-## ✨ Features
+## ✨ Características
 
-### 🎯 Autonomous Operation
-- **Zero Supervision**: Plans and executes tasks from start to finish
-- **Adaptive Intelligence**: Adjusts actions based on real-time feedback
-- **Multi-Step Planning**: Breaks down complex tasks into actionable steps
-- **Self-Correction**: Learns from errors and adapts strategy
+### 🎯 Operação Autônoma
+- **Processamento de Linguagem Natural**: Entende comandos em português
+- **Detecção Automática de Intenções**: Identifica o que você quer fazer
+- **Execução Autônoma**: Realiza tarefas sem comandos específicos
+- **Chat Inteligente**: Memória conversacional contextual
 
-### 👁️ Computer Vision
-- **Screen Monitoring**: Continuous screenshot capture
-- **Visual Analysis**: Understands screen content and context
-- **Element Detection**: Identifies buttons, links, and UI components
-- **Real-Time Awareness**: Tracks mouse position and active windows
+### 👁️ **VISÃO COMPUTACIONAL**
+- **Captura de Tela em Tempo Real**: Screenshot instantâneo
+- **Análise Visual com IA**: Entende e descreve conteúdo visual usando Ollama Vision
+- **Detecção de Elementos**: Encontra botões, menus, textos automaticamente
+- **Leitura de Texto**: Extrai e lê todo texto visível
+- **Guia de Interação**: Instrui onde e como clicar
+- **Detecção de Mudanças**: Compara screenshots
+- **Extração de Informações**: Responde perguntas sobre a tela
 
 ### 🌐 Web Automation
 - **Smart Navigation**: Opens URLs and navigates sites automatically
