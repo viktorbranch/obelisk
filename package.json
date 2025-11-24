@@ -6,6 +6,7 @@
   "scripts": {
     "start": "electron .",
     "build": "electron-builder --win --x64",
+    "build:portable": "electron-builder --win portable --x64",
     "pack": "electron-builder --dir"
   },
   "keywords": [
@@ -34,11 +35,23 @@
           "arch": [
             "x64"
           ]
+        },
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
         }
-      ]
+      ],
+      "icon": "assets/img/logo.png"
     },
     "portable": {
       "artifactName": "ObeliskAI-Portable.exe"
+    },
+    "nsis": {
+      "artifactName": "ObeliskAI-Setup.exe",
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
     },
     "files": [
       "**/*",

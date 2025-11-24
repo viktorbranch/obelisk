@@ -61,11 +61,12 @@ function createChat() {
     }
     
     const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+    const targetX = width - 510 - 8;
     
     chatWindow = new BrowserWindow({
-        width: 450,
+        width: 510,
         height: height,
-        x: width - 450 - 8,
+        x: width,
         y: 0,
         frame: false,
         transparent: false,
@@ -77,8 +78,31 @@ function createChat() {
             contextIsolation: false
         }
     });
-    
+
     chatWindow.loadFile(path.join(__dirname, '..', 'index.html'));
+    
+    // Esconde sidebar quando chat abre
+    if (sidebarWindow) {
+        sidebarWindow.hide();
+    }
+    
+    // Animação de slide da direita pra esquerda
+    const duration = 250;
+    const steps = 25;
+    const stepSize = (width - targetX) / steps;
+    const stepDelay = duration / steps;
+    
+    let currentStep = 0;
+    const slideInterval = setInterval(() => {
+        currentStep++;
+        const newX = width - (stepSize * currentStep);
+        chatWindow.setPosition(Math.round(newX), 0);
+        
+        if (currentStep >= steps) {
+            clearInterval(slideInterval);
+            chatWindow.setPosition(targetX, 0);
+        }
+    }, stepDelay);
     
     chatWindow.on('closed', () => {
         // Não destrói a janela, apenas esconde
@@ -95,7 +119,7 @@ function createChat() {
 
 // Inicializa app
 app.whenReady().then(() => {
-    createSidebar();
+    createSidebar(); // Cria barra lateral direita
     warmupModel(); // Pré-carrega o modelo em background
     
     app.on('activate', () => {
@@ -114,7 +138,30 @@ app.on('window-all-closed', () => {
 // IPC Handlers
 ipcMain.on('toggle-chat', () => {
     if (chatWindow && chatWindow.isVisible()) {
-        chatWindow.hide();
+        // Fecha com animação
+        const { width } = screen.getPrimaryDisplay().workAreaSize;
+        const startX = width - 510 - 8;
+        const duration = 250;
+        const steps = 25;
+        const stepSize = (width - startX) / steps;
+        const stepDelay = duration / steps;
+        
+        let currentStep = 0;
+        const slideInterval = setInterval(() => {
+            currentStep++;
+            const newX = startX + (stepSize * currentStep);
+            chatWindow.setPosition(Math.round(newX), 0);
+            
+            if (currentStep >= steps) {
+                clearInterval(slideInterval);
+                chatWindow.hide();
+                chatWindow.setPosition(startX, 0);
+                // Mostra sidebar quando fechar
+                if (sidebarWindow) {
+                    sidebarWindow.show();
+                }
+            }
+        }, stepDelay);
     } else {
         createChat();
     }
@@ -122,8 +169,35 @@ ipcMain.on('toggle-chat', () => {
 
 ipcMain.on('close-chat', () => {
     if (chatWindow) {
-        chatWindow.hide();
+        const { width } = screen.getPrimaryDisplay().workAreaSize;
+        const startX = width - 510 - 8;
+        const duration = 250;
+        const steps = 25;
+        const stepSize = (width - startX) / steps;
+        const stepDelay = duration / steps;
+        
+        let currentStep = 0;
+        const slideInterval = setInterval(() => {
+            currentStep++;
+            const newX = startX + (stepSize * currentStep);
+            chatWindow.setPosition(Math.round(newX), 0);
+            
+            if (currentStep >= steps) {
+                clearInterval(slideInterval);
+                chatWindow.hide();
+                chatWindow.setPosition(startX, 0);
+                // Mostra sidebar novamente
+                if (sidebarWindow) {
+                    sidebarWindow.show();
+                }
+            }
+        }, stepDelay);
     }
+});
+
+ipcMain.on('quit-app', () => {
+    console.log('🔴 Fechando aplicativo...');
+    app.quit();
 });
 
 ipcMain.handle('send-message', async (event, message) => {

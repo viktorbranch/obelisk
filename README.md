@@ -2,18 +2,26 @@
 
 **Obelisk** é um agente de IA totalmente autônomo com capacidade de VER, PENSAR e AGIR no seu computador.
 
-![Version](https://img.shields.io/badge/version-2.0.0-blue)
+![Version](https://img.shields.io/badge/version-3.0.0-blue)
 ![JavaScript](https://img.shields.io/badge/javascript-ES6+-yellow)
+![Electron](https://img.shields.io/badge/electron-28.0.0-brightgreen)
 ![License](https://img.shields.io/badge/license-MIT-purple)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey)
 
 ## ✨ Características
 
-### 🎯 Operação Autônoma
-- **Processamento de Linguagem Natural**: Entende comandos em português
-- **Detecção Automática de Intenções**: Identifica o que você quer fazer
-- **Execução Autônoma**: Realiza tarefas sem comandos específicos
-- **Chat Inteligente**: Memória conversacional contextual
+### 🎯 Interface Moderna
+- **Electron Desktop App**: Interface nativa do Windows
+- **Design Neomórfico Dark**: Visual moderno e elegante
+- **Animações Suaves**: Experiência fluida e responsiva
+- **Sidebar Inteligente**: Acesso rápido a funcionalidades
+- **Trigger Bar**: Barra lateral para abrir/fechar rapidamente
+
+### 🧠 IA Conversacional
+- **Ollama Integration**: Powered by Llama 3.2
+- **Processamento Rápido**: Otimizado para respostas em 2-5s
+- **Memória Contextual**: Lembra do histórico da conversa
+- **Detecção de Intenções**: Identifica automaticamente o que fazer
 
 ### 👁️ **VISÃO COMPUTACIONAL**
 - **Captura de Tela em Tempo Real**: Screenshot instantâneo
@@ -21,133 +29,173 @@
 - **Detecção de Elementos**: Encontra botões, menus, textos automaticamente
 - **Leitura de Texto**: Extrai e lê todo texto visível
 - **Guia de Interação**: Instrui onde e como clicar
-- **Detecção de Mudanças**: Compara screenshots
-- **Extração de Informações**: Responde perguntas sobre a tela
 
-### 🌐 Web Automation
-- **Smart Navigation**: Opens URLs and navigates sites automatically
-- **Intelligent Search**: Performs Google searches with natural language
-- **Content Extraction**: Parses HTML and extracts relevant information
-- **Interactive Elements**: Clicks buttons, fills forms, scrolls pages
-- **Universal Compatibility**: Works with any website
+### 🌐 Automação Web
+- **Navegação Inteligente**: Abre sites automaticamente
+- **Busca no Google**: Pesquisa e extrai resultados
+- **Sites Conhecidos**: 30+ sites pré-configurados
+- **Controle Universal**: Funciona com qualquer website
 
-### 🖥️ System Control
-- **Application Launcher**: Opens programs (Calculator, Notepad, etc.)
-- **Keyboard Control**: Types text and presses keys
-- **Mouse Automation**: Clicks at specific coordinates
-- **Screenshot Capture**: Takes and saves screen captures
-- **Command Execution**: Runs system commands safely
-
-### 💬 Natural Language Interface
-- **Conversational AI**: Chat naturally with Ollama LLM
-- **Intent Detection**: Understands what you want to accomplish
-- **Context Awareness**: Remembers conversation history
-- **Proactive Suggestions**: Recommends next steps
+### 🖥️ Controle do Sistema
+- **Abertura de Apps**: Calculator, Notepad, Chrome, etc.
+- **Comandos de Teclado**: Digita texto e pressiona teclas
+- **Automação de Mouse**: Clica em coordenadas específicas
+- **Execução Segura**: Roda comandos do sistema
 
 ## 🚀 Quick Start
 
-### Prerequisites
+### Requisitos
 
-1. **Python 3.8 or higher**
+1. **Node.js 18 ou superior**
    ```bash
-   python --version
+   node --version
+   npm --version
    ```
 
-2. **Ollama installed and running**
+2. **Ollama instalado e rodando**
    ```bash
-   # Download from https://ollama.ai
-   ollama pull llama3.2
+   # Download: https://ollama.ai
+   ollama pull llama3.2:latest
+   ollama pull llama3.2-vision:latest
    ollama serve
    ```
 
-### Installation
+### Instalação
 
-1. **Clone the repository**
+1. **Clone o repositório**
    ```bash
-   git clone https://github.com/obelisk-ai/obelisk.git
+   git clone https://github.com/yourusername/obelisk.git
    cd obelisk
    ```
 
-2. **Install dependencies** (only 6 packages!)
+2. **Instale as dependências**
    ```bash
-   pip install -r requirements.txt
+   npm install
    ```
 
-3. **Run Obelisk**
+3. **Execute o Obelisk**
    ```bash
-   # Windows (recommended)
-   scripts\start_obelisk_chat.bat
-
-   # Direct Python execution
-   python src/obelisk_agent.py
-   
-   # Or as module
-   python -m src.obelisk_agent
-
-   # Linux/macOS
-   python3 src/obelisk_agent.py
+   npm start
    ```
 
-4. **Optional: Create desktop shortcut** (Windows)
-   ```powershell
-   powershell -ExecutionPolicy Bypass -File scripts/create_shortcut.ps1
+   Ou use os launchers:
+   ```bash
+   # Windows
+   obelisk.bat           # CMD
+   obelisk.vbs           # Modo silencioso
+   obelisk_launcher.ps1  # PowerShell
    ```
 
-## 📖 Usage Examples
+### Dependências Instaladas
 
-### Web Research
+O projeto usa apenas pacotes leves:
+- **electron** (28.0.0): Framework desktop
+- **axios** (1.6.2): Cliente HTTP para Ollama
+- **screenshot-desktop** (^1.15.0): Captura de tela
+- **sharp** (^0.33.0): Processamento de imagem
+
+Total: ~4 pacotes principais (sem compilação nativa complexa)
+
+## 📖 Uso
+
+## 📖 Uso
+
+### Comandos de Visão
 ```
-"Search for GOTY 2024 winners and tell me who won"
-"Find Python tutorials on YouTube"
-"Get the latest news about artificial intelligence"
+"O que você vê na tela?"
+"Encontre o botão de login"
+"Leia o texto da tela"
+"Descreva o que está aparecendo"
+"Onde devo clicar para salvar?"
 ```
 
-### System Automation
+### Navegação Web
 ```
-"Open calculator and compute 1234 * 5678"
-"Create a note in Notepad with my task list"
-"Take a screenshot and save it"
-```
-
-### Complex Tasks
-```
-"Research the top 5 programming languages and create a comparison"
-"Find recipes for chocolate cake and save the best one"
-"Check my calendar and remind me of today's events"
+"Abra o YouTube"
+"Pesquise por tutoriais de JavaScript"
+"Entre no GitHub"
 ```
 
-## 🏗️ Architecture
+### Controle do Sistema
+```
+"Abra a calculadora"
+"Abra o bloco de notas"
+"Tire um screenshot"
+```
+
+## 🏗️ Arquitetura
 
 ```
 ┌─────────────────────────────────────────────┐
-│            User Interface (Tkinter)         │
+│         Electron Desktop App                │
 ├─────────────────────────────────────────────┤
-│                                             │
+│  ┌──────────┐  ┌──────────┐  ┌───────────┐ │
+│  │  Trigger │  │   Chat   │  │  Sidebar  │ │
+│  │   Bar    │  │  Window  │  │  Controls │ │
+│  └──────────┘  └──────────┘  └───────────┘ │
+├─────────────────────────────────────────────┤
+│              Main Process (Node.js)         │
 │  ┌──────────────┐      ┌─────────────────┐ │
-│  │   Ollama     │◄────►│  Autonomous     │ │
-│  │   Chat       │      │  Agent Engine   │ │
+│  │   Ollama     │◄────►│  Agent Engine   │ │
+│  │   API        │      │  (Intent + AI)  │ │
 │  └──────────────┘      └─────────────────┘ │
 │         ▲                      ▲            │
 │         │                      │            │
 │         ▼                      ▼            │
 │  ┌──────────────┐      ┌─────────────────┐ │
-│  │   Browser    │      │   System        │ │
-│  │   Controller │      │   Controller    │ │
+│  │   Vision     │      │   System        │ │
+│  │   Module     │      │   Automation    │ │
 │  └──────────────┘      └─────────────────┘ │
-│         │                      │            │
-└─────────┼──────────────────────┼────────────┘
-          ▼                      ▼
-    ┌──────────┐          ┌──────────┐
-    │ Selenium │          │PyAutoGUI │
-    │   Web    │          │  System  │
-    └──────────┘          └──────────┘
+└─────────────────────────────────────────────┘
 ```
 
-### Core Components
+### Componentes Principais
 
-1. **AutonomousAgent**: Vision, planning, and execution loop
-2. **OllamaChat**: LLM communication and context management
-3. **BrowserController**: Web automation with Selenium
+1. **scripts/main.js**: Processo principal do Electron, gerencia janelas
+2. **scripts/agent.js**: Engine de IA, detecção de intenções, automação
+3. **scripts/vision.js**: Módulo de visão computacional com Ollama Vision
+4. **index.html**: Interface do chat
+5. **css/**: Estilos neomórficos dark theme
+
+### Fluxo de Execução
+
+1. Usuário digita mensagem no chat
+2. `agent.js` detecta a intenção (OPEN_BROWSER, SEARCH, etc.)
+3. Se precisar de visão, chama `vision.js`
+4. Executa ação (abre site, busca, captura tela, etc.)
+5. Retorna resposta ao chat
+
+## 🎨 Personalização
+
+### Alterar Modelo Ollama
+
+Edite `scripts/main.js`:
+```javascript
+const MODEL = 'llama3.2:latest'; // Trocar modelo de chat
+```
+
+Edite `scripts/vision.js`:
+```javascript
+const VISION_MODEL = 'llama3.2-vision:latest'; // Trocar modelo de visão
+```
+
+### Ajustar Timeout
+
+Edite `scripts/agent.js`:
+```javascript
+timeout: 30000, // 30 segundos
+num_predict: 50, // Tokens máximos
+```
+
+### Adicionar Sites Conhecidos
+
+Edite `scripts/agent.js`:
+```javascript
+const KNOWN_SITES = {
+    'meusite': 'https://meusite.com',
+    // ...
+};
+```
 4. **ChatInterface**: User interface and interaction
 
 ## 🎮 Operating Modes

@@ -7,31 +7,63 @@
     <link rel="stylesheet" href="css/chat.css">
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <div class="header-content">
-                <div class="title-section">
-                    <div class="title-main">
-                        <h1>OBELISK</h1>
-                        <span>AI Agent</span>
-                    </div>
-                    <div class="status">
-                        <div class="status-dot"></div>
-                        <span>Sistema Online</span>
-                    </div>
-                </div>
+    <div class="app-wrapper">
+        <div class="sidebar-left">
+            <div class="sidebar-top">
+                <button class="new-chat-btn" id="newChatBtn" title="Novo Chat">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                </button>
             </div>
-            <button class="close-btn" id="closeBtn">×</button>
+            
+            <div class="sidebar-middle">
+                <button class="minimize-btn" id="minimizeBtn" title="Minimizar">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="sidebar-bottom">
+                <button class="sidebar-icon-btn" id="settingsBtn" title="Configurações">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M12 1v6m0 6v6m5.656-13.656l-4.243 4.243m-4.243 4.243l-4.242 4.242M23 12h-6m-6 0H1m17.656 5.656l-4.243-4.243m-4.243-4.243l-4.242-4.242"></path>
+                    </svg>
+                </button>
+                
+                <button class="sidebar-icon-btn" id="profileBtn" title="Perfil">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                </button>
+            </div>
         </div>
         
-        <div class="chat-container" id="chatContainer">
-            <div class="message ai">
-                <div class="message-avatar">
-                    <img src="assets/img/logo.png" alt="Obelisk">
+        <div class="container">
+            <div class="header">
+                <div class="header-content">
+                    <div class="title-section">
+                        <div class="title-main">
+                            <h1>OBELISK</h1>
+                            <span>AGENT.AI</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="message-content">
-                    Olá! Eu sou o Obelisk AI. Como posso ajudar você hoje?
-                </div>
+                <button class="close-btn" id="closeBtn">×</button>
+            </div>
+            
+            <div class="chat-container" id="chatContainer">
+                <div class="message ai">
+                    <div class="message-avatar">
+                        <img src="assets/img/logo.png" alt="Obelisk">
+                    </div>
+                    <div class="message-content">
+                        Olá! Eu sou o Obelisk AI. Como posso ajudar você hoje?
+                    </div>
             </div>
         </div>
         
@@ -64,7 +96,8 @@
         
         // Fechar
         closeBtn.addEventListener('click', () => {
-            ipcRenderer.send('close-chat');
+            console.log('Botão X clicado - enviando quit-app');
+            ipcRenderer.send('quit-app');
         });
         
         // Enter para enviar
@@ -116,7 +149,7 @@
             typingDiv.id = 'typingIndicator';
             
             const avatar = document.createElement('div');
-            avatar.className = 'message-avatar';
+            avatar.className = 'message-avatar spinning';
             const logoImg = document.createElement('img');
             logoImg.src = 'assets/img/logo.png';
             logoImg.alt = 'Obelisk';
@@ -187,11 +220,27 @@
                 }
                 console.error(error);
             }
-            
-            isProcessing = false;
-            sendBtn.disabled = false;
-            messageInput.focus();
         }
+        
+        // Sidebar buttons
+        document.getElementById('newChatBtn').addEventListener('click', () => {
+            // Limpa histórico e recarrega
+            if(confirm('Iniciar novo chat? O histórico atual será perdido.')) {
+                location.reload();
+            }
+        });
+        
+        document.getElementById('minimizeBtn').addEventListener('click', () => {
+            ipcRenderer.send('close-chat');
+        });
+        
+        document.getElementById('settingsBtn').addEventListener('click', () => {
+            alert('Configurações em breve!');
+        });
+        
+        document.getElementById('profileBtn').addEventListener('click', () => {
+            alert('Perfil em breve!');
+        });
     </script>
 </body>
 </html>
