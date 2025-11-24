@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Obelisk AI</title>
-    <link rel="stylesheet" href="css/chat.css">
+    <link rel="stylesheet" href="../../src/css/chat.css">
 </head>
 <body>
     <div class="app-wrapper">
@@ -59,7 +59,7 @@
             <div class="chat-container" id="chatContainer">
                 <div class="message ai">
                     <div class="message-avatar">
-                        <img src="assets/img/logo.png" alt="Obelisk">
+                        <img src="../../assets/img/logo.png" alt="Obelisk">
                     </div>
                     <div class="message-content">
                         Olá! Eu sou o Obelisk AI. Como posso ajudar você hoje?
@@ -125,7 +125,7 @@
                 avatar.textContent = '👤';
             } else {
                 const logoImg = document.createElement('img');
-                logoImg.src = 'assets/img/logo.png';
+                logoImg.src = '../../assets/img/logo.png';
                 logoImg.alt = 'Obelisk';
                 avatar.appendChild(logoImg);
             }
@@ -151,7 +151,7 @@
             const avatar = document.createElement('div');
             avatar.className = 'message-avatar spinning';
             const logoImg = document.createElement('img');
-            logoImg.src = 'assets/img/logo.png';
+            logoImg.src = '../../assets/img/logo.png';
             logoImg.alt = 'Obelisk';
             avatar.appendChild(logoImg);
             

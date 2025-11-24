@@ -1,6 +1,6 @@
 const { app, BrowserWindow, ipcMain, screen } = require('electron');
 const path = require('path');
-const { ObeliskAgent } = require('./agent');
+const { ObeliskAgent } = require('../src/js/agent');
 
 // Configurações
 const OLLAMA_URL = 'http://127.0.0.1:11434';
@@ -9,12 +9,12 @@ const MODEL = 'llama3.2:latest';
 // Inicializa agente
 const agent = new ObeliskAgent(OLLAMA_URL, MODEL);
 
-// Pré-aquece o modelo ao iniciar (melhora primeira resposta)
+// Pré-aquece o modelo ao iniciar
 async function warmupModel() {
     try {
         console.log('🔥 Aquecendo modelo...');
         await agent.sendMessage('Hi');
-        agent.resetConversation(); // Limpa histórico do warmup
+        agent.resetConversation();
         console.log('✅ Modelo pronto!');
     } catch (error) {
         console.log('⚠️ Modelo será carregado no primeiro uso');
@@ -44,7 +44,7 @@ function createSidebar() {
         }
     });
     
-    sidebarWindow.loadFile(path.join(__dirname, '..', 'sidebar.html'));
+    sidebarWindow.loadFile(path.join(__dirname, '..', 'src', 'renderer', 'sidebar.html'));
     sidebarWindow.setIgnoreMouseEvents(false);
     
     // Mantém sempre visível
@@ -79,7 +79,7 @@ function createChat() {
         }
     });
 
-    chatWindow.loadFile(path.join(__dirname, '..', 'index.html'));
+    chatWindow.loadFile(path.join(__dirname, '..', 'src', 'renderer', 'index.html'));
     
     // Esconde sidebar quando chat abre
     if (sidebarWindow) {
@@ -105,16 +105,8 @@ function createChat() {
     }, stepDelay);
     
     chatWindow.on('closed', () => {
-        // Não destrói a janela, apenas esconde
         chatWindow = null;
     });
-    
-    // Remove auto-close ao perder foco
-    // chatWindow.on('blur', () => {
-    //     if (chatWindow) {
-    //         chatWindow.close();
-    //     }
-    // });
 }
 
 // Inicializa app
@@ -213,11 +205,6 @@ ipcMain.handle('send-message', async (event, message) => {
             message: `Erro: ${error.message}`
         };
     }
-});
-
-ipcMain.handle('send-message-stream', async (event, message) => {
-    // Stream não implementado ainda - usar modo normal
-    return await agent.processIntent(message);
 });
 
 console.log('🚀 Obelisk AI - Electron App');
