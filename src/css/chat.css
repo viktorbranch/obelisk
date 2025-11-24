@@ -10,7 +10,7 @@
 
 body {
     font-family: 'Inter', 'Segoe UI', sans-serif;
-    background: #1a1a1a;
+    background: transparent;
     height: 100vh;
     overflow: hidden;
     -webkit-app-region: no-drag;
@@ -20,6 +20,10 @@ body {
     display: flex;
     width: 100%;
     height: 100vh;
+    border-radius: 16px 0 0 16px;
+    overflow: hidden;
+    background: #1a1a1a;
+    box-shadow: -8px 0 24px rgba(0, 0, 0, 0.6);
 }
 
 /* Left Sidebar */
@@ -50,7 +54,7 @@ body {
 .new-chat-btn {
     width: 35px;
     height: 35px;
-    background: linear-gradient(135deg, #ff6600 0%, #ff3300 100%);
+    background: linear-gradient(135deg, #9333ea 0%, #6b21a8 100%);
     border: none;
     border-radius: 10px;
     cursor: pointer;
@@ -59,12 +63,12 @@ body {
     justify-content: center;
     color: #fff;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(255, 102, 0, 0.3);
+    box-shadow: 0 4px 15px rgba(147, 51, 234, 0.4);
 }
 
 .new-chat-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(255, 102, 0, 0.5);
+    box-shadow: 0 6px 20px rgba(147, 51, 234, 0.6);
 }
 
 .new-chat-btn:active {
@@ -106,20 +110,20 @@ body {
     width: 35px;
     height: 35px;
     background: transparent;
-    border: 2px solid #ff6600;
+    border: 2px solid #9333ea;
     border-radius: 50%;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #ff6600;
+    color: #9333ea;
     transition: all 0.3s ease;
 }
 
 .minimize-btn:hover {
-    background: rgba(255, 102, 0, 0.1);
-    border-color: #ff3300;
-    color: #ff3300;
+    background: rgba(147, 51, 234, 0.1);
+    border-color: #7c3aed;
+    color: #7c3aed;
     transform: scale(1.1);
 }
 
@@ -197,12 +201,12 @@ body {
     font-family: 'Montserrat', sans-serif;
     font-weight: 900;
     font-size: 42px;
-    background: linear-gradient(135deg, #ff0000 0%, #cc0000 50%, #990000 100%);
+    background: linear-gradient(135deg, #9333ea 0%, #7c3aed 50%, #6b21a8 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     letter-spacing: -0.5px;
-    text-shadow: 2px 2px 8px rgba(255, 0, 0, 0.3);
+    text-shadow: 2px 2px 8px rgba(147, 51, 234, 0.4);
 }
 
 .title-main span {
@@ -259,7 +263,7 @@ body {
 }
 
 .close-btn:hover {
-    color: #ff6600;
+    color: #9333ea;
     box-shadow: 
         inset 2px 2px 4px rgba(0, 0, 0, 0.6),
         inset -2px -2px 4px rgba(50, 50, 50, 0.2);
@@ -331,10 +335,10 @@ body {
 }
 
 .message.user .message-avatar {
-    background: linear-gradient(135deg, #ff6600 0%, #ff3300 100%);
+    background: linear-gradient(135deg, #9333ea 0%, #7c3aed 100%);
     box-shadow: 
-        4px 4px 12px rgba(255, 102, 0, 0.4),
-        -2px -2px 8px rgba(255, 51, 0, 0.2);
+        4px 4px 12px rgba(147, 51, 234, 0.4),
+        -2px -2px 8px rgba(124, 58, 237, 0.2);
     color: white;
 }
 
@@ -446,7 +450,7 @@ body {
     box-shadow: 
         inset 6px 6px 12px rgba(0, 0, 0, 0.7),
         inset -4px -4px 10px rgba(60, 60, 60, 0.3);
-    color: #ff6600;
+    color: #9333ea;
 }
 
 .input-field::placeholder {
@@ -459,7 +463,7 @@ body {
     border-radius: 16px;
     border: none;
     background: #1a1a1a;
-    color: #ff6600;
+    color: #9333ea;
     cursor: pointer;
     font-size: 22px;
     display: flex;
@@ -475,7 +479,7 @@ body {
     box-shadow: 
         4px 4px 8px rgba(0, 0, 0, 0.7),
         -4px -4px 8px rgba(60, 60, 60, 0.3);
-    color: #ff3300;
+    color: #7c3aed;
 }
 
 .send-btn:active {

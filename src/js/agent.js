@@ -25,22 +25,21 @@ class ObeliskAgent {
         });
 
         try {
-            const response = await axios.post(`${this.ollamaUrl}/api/chat`, {
+            const response = await axios.post(`${this.ollamaUrl}/api/generate`, {
                 model: this.model,
-                messages: this.conversationHistory,
+                prompt: optimizedMessage,
                 stream: false,
                 options: {
-                    num_predict: 50,
+                    num_predict: 100,
                     temperature: 0.7,
                     top_p: 0.9,
-                    num_ctx: 1024,
-                    stop: ['\n\n', '---']
+                    num_ctx: 2048
                 }
             }, {
                 timeout: 30000
             });
 
-            const assistantMessage = response.data.message.content;
+            const assistantMessage = response.data.response;
             
             this.conversationHistory.push({
                 role: 'assistant',

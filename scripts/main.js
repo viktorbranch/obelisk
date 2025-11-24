@@ -29,9 +29,9 @@ function createSidebar() {
     const { width, height } = screen.getPrimaryDisplay().workAreaSize;
     
     sidebarWindow = new BrowserWindow({
-        width: 8,
+        width: 10,
         height: 200,
-        x: width - 8,
+        x: width - 10,
         y: Math.floor((height - 200) / 2),
         frame: false,
         transparent: true,
@@ -61,9 +61,9 @@ function createChat() {
     }
     
     const { width, height } = screen.getPrimaryDisplay().workAreaSize;
-    const sidebarWidth = 8;
+    const sidebarWidth = 10;
     const chatWidth = 450;
-    const margin = 25;
+    const margin = 0;
     const targetX = width - chatWidth - sidebarWidth - margin;
     
     chatWindow = new BrowserWindow({
@@ -72,10 +72,11 @@ function createChat() {
         x: width,
         y: 0,
         frame: false,
-        transparent: false,
+        transparent: true,
         alwaysOnTop: true,
         skipTaskbar: false,
         resizable: false,
+        roundedCorners: true,
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false
@@ -132,13 +133,21 @@ app.on('window-all-closed', () => {
 
 // IPC Handlers
 ipcMain.on('toggle-chat', () => {
-    if (chatWindow && chatWindow.isVisible()) {
-        // Fecha com animação
+    if (!chatWindow) {
+        // Não existe, cria e abre
+        createChat();
+    } else if (chatWindow.isVisible()) {
+        // Está visível, fecha com animação
         const { width } = screen.getPrimaryDisplay().workAreaSize;
-        const startX = width - 450 - 8 - 25;
+        const chatWidth = 450;
+        const sidebarWidth = 10;
+        const margin = 0;
+        const startX = width - chatWidth - sidebarWidth - margin;
+        const targetX = width;
+        
         const duration = 250;
         const steps = 25;
-        const stepSize = (width - startX) / steps;
+        const stepSize = (targetX - startX) / steps;
         const stepDelay = duration / steps;
         
         let currentStep = 0;
@@ -150,7 +159,6 @@ ipcMain.on('toggle-chat', () => {
             if (currentStep >= steps) {
                 clearInterval(slideInterval);
                 chatWindow.hide();
-                chatWindow.setPosition(startX, 0);
                 // Mostra sidebar quando fechar
                 if (sidebarWindow) {
                     sidebarWindow.show();
@@ -158,17 +166,53 @@ ipcMain.on('toggle-chat', () => {
             }
         }, stepDelay);
     } else {
-        createChat();
+        // Existe mas está escondida, mostra com animação
+        const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+        const chatWidth = 450;
+        const sidebarWidth = 10;
+        const margin = 0;
+        const targetX = width - chatWidth - sidebarWidth - margin;
+        
+        chatWindow.setPosition(width, 0);
+        chatWindow.show();
+        
+        // Esconde sidebar quando chat abre
+        if (sidebarWindow) {
+            sidebarWindow.hide();
+        }
+        
+        // Animação de slide da direita pra esquerda
+        const duration = 250;
+        const steps = 25;
+        const stepSize = (width - targetX) / steps;
+        const stepDelay = duration / steps;
+        
+        let currentStep = 0;
+        const slideInterval = setInterval(() => {
+            currentStep++;
+            const newX = width - (stepSize * currentStep);
+            chatWindow.setPosition(Math.round(newX), 0);
+            
+            if (currentStep >= steps) {
+                clearInterval(slideInterval);
+                chatWindow.setPosition(targetX, 0);
+            }
+        }, stepDelay);
     }
 });
 
 ipcMain.on('close-chat', () => {
     if (chatWindow) {
         const { width } = screen.getPrimaryDisplay().workAreaSize;
-        const startX = width - 450 - 8 - 25;
+        const chatWidth = 450;
+        const sidebarWidth = 10;
+        const margin = 0;
+        const startX = width - chatWidth - sidebarWidth - margin;
+        const targetX = width;
+        
         const duration = 250;
         const steps = 25;
-        const stepSize = (width - startX) / steps;
+        const stepSize = (targetX - startX) / steps;
         const stepDelay = duration / steps;
         
         let currentStep = 0;
@@ -180,7 +224,6 @@ ipcMain.on('close-chat', () => {
             if (currentStep >= steps) {
                 clearInterval(slideInterval);
                 chatWindow.hide();
-                chatWindow.setPosition(startX, 0);
                 // Mostra sidebar novamente
                 if (sidebarWindow) {
                     sidebarWindow.show();
