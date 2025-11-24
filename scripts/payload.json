@@ -1,6 +1,0 @@
-{
-  "model": "llama3.2:latest",
-  "messages": [
-    {"role": "user", "content": "Olá Ollama!"}
-  ]
-}

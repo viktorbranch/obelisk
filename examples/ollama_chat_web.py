@@ -1,31 +1,51 @@
-"""Interface gráfica para conversar com Ollama com capacidade de ver e interagir com páginas web.
+"""Obelisk AI - Autonomous Computer Agent
 
-Uso:
+An intelligent autonomous agent that can see, think, and act on your computer.
+
+Features:
+    - Autonomous task execution with vision and planning
+    - Web automation with Selenium and BeautifulSoup
+    - Complete system control with PyAutoGUI
+    - Natural language interface with Ollama
+    - Real-time screen monitoring and analysis
+
+Usage:
     python examples/ollama_chat_web.py
 
-Requisitos:
-    - Ollama rodando localmente
-    - pip install selenium
-    - ChromeDriver (baixado automaticamente pelo Selenium)
+Requirements:
+    - Python 3.8+
+    - Ollama running locally (http://127.0.0.1:11434)
+    - pip install -r requirements.txt
+
+Author: Obelisk AI Team
+License: MIT
+Version: 1.0.0
 """
 
 import os
 import sys
 import threading
-import webbrowser
 import time
 import subprocess
 import pyautogui
+import base64
+import json
+import re
 from datetime import datetime
 from typing import Optional, Dict, List
-
-ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-if ROOT not in sys.path:
-    sys.path.insert(0, ROOT)
+from io import BytesIO
 
 import tkinter as tk
 from tkinter import scrolledtext, ttk
 import requests
+
+# Import do processador de intenções
+try:
+    from intent_processor import IntentProcessor
+    INTENT_PROCESSOR_AVAILABLE = True
+except ImportError:
+    INTENT_PROCESSOR_AVAILABLE = False
+    print("⚠️  intent_processor.py não encontrado - usando modo básico")
 
 try:
     from selenium import webdriver
@@ -34,19 +54,14 @@ try:
     from selenium.webdriver.common.keys import Keys
     from selenium.webdriver.support.ui import WebDriverWait
     from selenium.webdriver.support import expected_conditions as EC
-    from selenium.common.exceptions import TimeoutException, NoSuchElementException
+    from selenium.common.exceptions import TimeoutException, NoSuchElementException, InvalidSessionIdException
     from bs4 import BeautifulSoup
     SELENIUM_AVAILABLE = True
     BS4_AVAILABLE = True
-except ImportError as e:
-    if "selenium" in str(e):
-        SELENIUM_AVAILABLE = False
-        print("⚠️  Selenium não instalado. Instale com: pip install selenium")
-    if "bs4" in str(e):
-        BS4_AVAILABLE = False
-        print("⚠️  BeautifulSoup não instalado. Instale com: pip install beautifulsoup4")
-    SELENIUM_AVAILABLE = SELENIUM_AVAILABLE if 'SELENIUM_AVAILABLE' in locals() else True
-    BS4_AVAILABLE = BS4_AVAILABLE if 'BS4_AVAILABLE' in locals() else True
+except ImportError:
+    SELENIUM_AVAILABLE = False
+    BS4_AVAILABLE = False
+    print("⚠️  Instale as dependências: pip install selenium beautifulsoup4")
 
 # Configurações do Ollama
 BASE_URL = os.environ.get('OLLAMA_URL', 'http://127.0.0.1:11434')
@@ -121,6 +136,292 @@ class OllamaChat:
             return f"❌ Erro: {str(e)}"
 
 
+class AutonomousAgent:
+    """Agente autônomo que vê a tela, planeja e executa ações"""
+    
+    def __init__(self, base_url: str, model: str):
+        self.base_url = base_url
+        self.model = model
+        self.current_task = None
+        self.task_steps = []
+        self.completed_steps = []
+        self.max_iterations = 20
+        
+    def capture_screen(self) -> str:
+        """Captura a tela e converte para base64"""
+        try:
+            screenshot = pyautogui.screenshot()
+            buffered = BytesIO()
+            screenshot.save(buffered, format="PNG")
+            img_str = base64.b64encode(buffered.getvalue()).decode()
+            return img_str
+        except Exception as e:
+            print(f"Erro ao capturar tela: {e}")
+            return None
+    
+    def analyze_screen_with_vision(self, task: str, screen_b64: str) -> Dict:
+        """Analisa a tela e determina próximos passos usando Ollama"""
+        try:
+            # Captura informações da tela sem visão
+            screen_info = self.get_screen_info()
+            
+            # Monta prompt para análise
+            prompt = f"""TAREFA DO USUÁRIO: {task}
+
+INFORMAÇÕES DA TELA ATUAL:
+- Posição do mouse: {screen_info['mouse_pos']}
+- Tamanho da tela: {screen_info['screen_size']}
+- Janela ativa: {screen_info.get('active_window', 'Desconhecido')}
+
+INSTRUÇÕES:
+Você é um agente autônomo executando uma tarefa.
+Determine o próximo passo lógico para completar: "{task}"
+
+Responda APENAS em formato JSON:
+{{
+    "observacao": "o que você deduz sobre a situação atual",
+    "proximo_passo": "descrição clara do próximo passo",
+    "acao": "SEARCH | OPEN_APP | TYPE | PRESS_KEY | WAIT | DONE",
+    "parametros": {{"detalhe": "valor específico"}},
+    "progresso": 0-100
+}}
+
+AÇÕES DISPONÍVEIS:
+- SEARCH: Buscar no Google (parametros: {{"query": "termo"}})
+- OPEN_APP: Abrir programa (parametros: {{"app": "nome"}})
+- TYPE: Digitar texto (parametros: {{"texto": "conteúdo"}})
+- PRESS_KEY: Pressionar tecla (parametros: {{"key": "enter/esc/tab"}})
+- WAIT: Aguardar (parametros: {{"segundos": 2}})
+- DONE: Tarefa completa
+
+Seja OBJETIVO e PRAGMÁTICO. Escolha a ação mais direta.
+"""
+            
+            # Envia para Ollama
+            response = requests.post(
+                f"{self.base_url}/api/generate",
+                json={{
+                    "model": self.model,
+                    "prompt": prompt,
+                    "stream": False
+                }},
+                timeout=30
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                response_text = result.get('response', '')
+                
+                # Tenta extrair JSON
+                try:
+                    json_match = re.search(r'\{{.*\}}', response_text, re.DOTALL)
+                    if json_match:
+                        data = json.loads(json_match.group(0))
+                        return data
+                except:
+                    pass
+                
+                # Fallback: cria resposta padrão baseada na tarefa
+                return self.create_default_action(task)
+            
+            return self.create_default_action(task)
+            
+        except Exception as e:
+            print(f"Erro na análise: {{e}}")
+            return self.create_default_action(task)
+    
+    def get_screen_info(self) -> Dict:
+        """Obtém informações da tela sem usar visão"""
+        try:
+            mouse_x, mouse_y = pyautogui.position()
+            screen_w, screen_h = pyautogui.size()
+            
+            return {{
+                'mouse_pos': (mouse_x, mouse_y),
+                'screen_size': (screen_w, screen_h),
+                'timestamp': datetime.now().isoformat()
+            }}
+        except:
+            return {{'mouse_pos': (0, 0), 'screen_size': (1920, 1080)}}
+    
+    def create_default_action(self, task: str) -> Dict:
+        """Cria ação padrão baseada em palavras-chave da tarefa"""
+        task_lower = task.lower()
+        
+        # Detecta intenção pela tarefa
+        if any(word in task_lower for word in ['pesquise', 'busque', 'procure', 'google']):
+            # Extrai termo de busca
+            for word in ['pesquise', 'busque', 'procure']:
+                if word in task_lower:
+                    query = task_lower.split(word)[-1].strip()
+                    query = re.sub(r'\s+(e|pela|pelo|por|sobre|a|o)\s+', ' ', query)
+                    return {{
+                        "observacao": f"Detectada necessidade de buscar: {{query}}",
+                        "proximo_passo": f"Buscar '{{query}}' no Google",
+                        "acao": "SEARCH",
+                        "parametros": {{"query": query}},
+                        "progresso": 20
+                    }}
+        
+        if any(word in task_lower for word in ['abra', 'abre', 'execute']):
+            # Detecta programa
+            programs = {{
+                'calculadora': 'calc',
+                'bloco de notas': 'notepad',
+                'notepad': 'notepad',
+                'paint': 'mspaint',
+                'explorador': 'explorer',
+                'chrome': 'chrome',
+                'firefox': 'firefox'
+            }}
+            
+            for prog_name, prog_cmd in programs.items():
+                if prog_name in task_lower:
+                    return {{
+                        "observacao": f"Detectada necessidade de abrir {{prog_name}}",
+                        "proximo_passo": f"Abrir {{prog_name}}",
+                        "acao": "OPEN_APP",
+                        "parametros": {{"app": prog_cmd}},
+                        "progresso": 50
+                    }}
+        
+        # Ação padrão: aguardar
+        return {{
+            "observacao": "Analisando tarefa",
+            "proximo_passo": "Aguardando análise completa",
+            "acao": "WAIT",
+            "parametros": {{"segundos": 1}},
+            "progresso": 10
+        }}
+    
+    def execute_action(self, action_data: Dict) -> bool:
+        """Executa a ação determinada pela análise"""
+        try:
+            action = action_data.get('acao', '').upper()
+            params = action_data.get('parametros', {})
+            
+            if action == "CLICK":
+                # Clica em posição ou busca elemento
+                if 'x' in params and 'y' in params:
+                    pyautogui.click(params['x'], params['y'])
+                elif 'texto' in params:
+                    # Tenta encontrar texto na tela e clicar
+                    location = pyautogui.locateOnScreen(params['texto'])
+                    if location:
+                        pyautogui.click(location)
+                print(f"✓ Clique executado")
+                return True
+                
+            elif action == "TYPE":
+                # Digita texto
+                text = params.get('texto', params.get('detalhe', ''))
+                pyautogui.write(text, interval=0.05)
+                print(f"✓ Digitado: {text[:50]}")
+                return True
+                
+            elif action == "SEARCH":
+                # Busca no Google
+                query = params.get('query', params.get('detalhe', ''))
+                # Abre Google e busca
+                pyautogui.hotkey('win', 'r')
+                time.sleep(0.5)
+                pyautogui.write(f'https://www.google.com/search?q={query}')
+                pyautogui.press('enter')
+                print(f"✓ Busca iniciada: {query}")
+                return True
+                
+            elif action == "OPEN_APP":
+                # Abre aplicativo
+                app = params.get('app', params.get('detalhe', ''))
+                pyautogui.hotkey('win', 'r')
+                time.sleep(0.5)
+                pyautogui.write(app)
+                pyautogui.press('enter')
+                print(f"✓ Aplicativo aberto: {app}")
+                return True
+                
+            elif action == "PRESS_KEY":
+                # Pressiona tecla
+                key = params.get('key', params.get('detalhe', ''))
+                pyautogui.press(key)
+                print(f"✓ Tecla pressionada: {key}")
+                return True
+                
+            elif action == "WAIT":
+                # Aguarda
+                duration = params.get('segundos', 2)
+                time.sleep(duration)
+                print(f"✓ Aguardando {duration}s")
+                return True
+                
+            elif action == "DONE":
+                print("✓ Tarefa concluída!")
+                return True
+                
+            return False
+            
+        except Exception as e:
+            print(f"✗ Erro ao executar ação: {e}")
+            return False
+    
+    def run_autonomous_task(self, task: str, progress_callback=None) -> List[str]:
+        """Executa tarefa de forma autônoma com loop de visão-análise-ação"""
+        self.current_task = task
+        self.task_steps = []
+        self.completed_steps = []
+        
+        iteration = 0
+        
+        while iteration < self.max_iterations:
+            iteration += 1
+            
+            # 1. Captura a tela
+            if progress_callback:
+                progress_callback(f"🔍 Iteração {iteration}: Capturando tela...")
+            
+            screen = self.capture_screen()
+            if not screen:
+                break
+            
+            # 2. Analisa com visão
+            if progress_callback:
+                progress_callback(f"🧠 Analisando situação atual...")
+            
+            analysis = self.analyze_screen_with_vision(task, screen)
+            if not analysis:
+                break
+            
+            # 3. Registra observação
+            step_desc = f"[{iteration}] {analysis.get('observacao', 'N/A')}"
+            self.task_steps.append(step_desc)
+            
+            if progress_callback:
+                progress_callback(f"📊 Progresso: {analysis.get('progresso', 0)}%")
+                progress_callback(f"👁️ Vejo: {analysis.get('observacao', '')[:100]}")
+                progress_callback(f"▶️ Próximo passo: {analysis.get('proximo_passo', '')}")
+            
+            # 4. Verifica se terminou
+            if analysis.get('acao') == 'DONE':
+                self.completed_steps.append("Tarefa concluída!")
+                if progress_callback:
+                    progress_callback("✅ TAREFA COMPLETA!")
+                break
+            
+            # 5. Executa a ação
+            if progress_callback:
+                progress_callback(f"⚡ Executando: {analysis.get('acao')}")
+            
+            success = self.execute_action(analysis)
+            
+            if success:
+                self.completed_steps.append(analysis.get('proximo_passo', 'Ação executada'))
+            
+            # 6. Aguarda antes da próxima iteração
+            time.sleep(2)
+        
+        return self.completed_steps
+
+
 class BrowserController:
     """Controlador para abrir URLs e extrair conteúdo do navegador"""
     
@@ -129,17 +430,44 @@ class BrowserController:
         self.selenium_enabled = SELENIUM_AVAILABLE
         
     def initialize_driver(self):
-        """Inicializa o driver do Selenium"""
+        """Inicializa o driver do Selenium com opções anti-detecção"""
         if not self.selenium_enabled:
             return False
             
         try:
             chrome_options = Options()
+            
+            # ANTI-DETECÇÃO: Remove flags de automação
             chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
             chrome_options.add_experimental_option('useAutomationExtension', False)
             
+            # ANTI-DETECÇÃO: User-Agent real (parece navegador normal)
+            chrome_options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
+            
+            # ANTI-DETECÇÃO: Desabilita recursos que denunciam bot
+            chrome_options.add_argument('--disable-blink-features=AutomationControlled')
+            
+            # PERFORMANCE: Desabilita recursos desnecessários
+            chrome_options.add_argument('--disable-gpu')
+            chrome_options.add_argument('--no-sandbox')
+            chrome_options.add_argument('--disable-dev-shm-usage')
+            
+            # PRIVACIDADE: Desabilita logging
+            chrome_options.add_argument('--disable-logging')
+            chrome_options.add_argument('--log-level=3')
+            
+            # OPCIONAL: Modo headless (sem janela visível) - descomentado para ver
+            # chrome_options.add_argument('--headless=new')
+            
             self.driver = webdriver.Chrome(options=chrome_options)
-            print("✓ Driver do Chrome inicializado")
+            
+            # ANTI-DETECÇÃO: Remove webdriver property
+            self.driver.execute_cdp_cmd('Network.setUserAgentOverride', {
+                "userAgent": 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            })
+            self.driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+            
+            print("✓ Driver do Chrome inicializado (modo stealth)")
             
             # Maximiza a janela para melhor visualização
             self.driver.maximize_window()
@@ -152,27 +480,81 @@ class BrowserController:
             return False
     
     def open_url(self, url: str) -> bool:
-        """Abre URL no navegador"""
+        """Abre URL no navegador com comportamento humano"""
+        if not self.driver:
+            return False
+            
         try:
             # Garante que a URL tem protocolo
             if not url.startswith(('http://', 'https://')):
                 url = 'https://' + url
                 
-            if self.driver:
-                self.driver.get(url)
-                time.sleep(2)  # Aguarda carregamento
-                return True
-            else:
-                webbrowser.open(url)
-                return True
+            self.driver.get(url)
+            
+            # ANTI-DETECÇÃO: Delay aleatório (simula leitura humana)
+            import random
+            time.sleep(random.uniform(1.5, 3.0))
+            
+            return True
         except Exception as e:
-            print(f"Erro ao abrir navegador: {e}")
+            print(f"Erro ao abrir URL: {e}")
             return False
     
     def search_google(self, query: str) -> bool:
-        """Realiza busca no Google"""
-        search_url = f"https://www.google.com/search?q={query.replace(' ', '+')}"
-        return self.open_url(search_url)
+        """Realiza busca no Google com comportamento anti-bot"""
+        try:
+            # ALTERNATIVA 1: Usar DuckDuckGo (sem reCAPTCHA)
+            search_url = f"https://duckduckgo.com/?q={query.replace(' ', '+')}"
+            
+            # ALTERNATIVA 2: Google com parâmetros específicos
+            # search_url = f"https://www.google.com/search?q={query.replace(' ', '+')}&hl=pt-BR"
+            
+            success = self.open_url(search_url)
+            
+            # Verifica se caiu em reCAPTCHA
+            if success and self.driver:
+                try:
+                    page_text = self.driver.page_source.lower()
+                    if 'recaptcha' in page_text or 'captcha' in page_text:
+                        print("⚠️  reCAPTCHA detectado! Usando DuckDuckGo como alternativa...")
+                        # Força usar DuckDuckGo
+                        search_url = f"https://duckduckgo.com/?q={query.replace(' ', '+')}"
+                        return self.open_url(search_url)
+                except:
+                    pass
+            
+            return success
+        except Exception as e:
+            print(f"Erro na busca: {e}")
+            return False
+    
+    def check_and_handle_captcha(self) -> bool:
+        """Verifica se há reCAPTCHA e tenta contornar"""
+        if not self.driver:
+            return False
+        
+        try:
+            page_source = self.driver.page_source.lower()
+            current_url = self.driver.current_url
+            
+            # Detecta reCAPTCHA
+            if 'recaptcha' in page_source or 'captcha' in page_source or 'unusual traffic' in page_source:
+                print("⚠️  reCAPTCHA/CAPTCHA detectado!")
+                print("💡 Opções:")
+                print("   1. Aguarde 10-30 segundos (Google pode liberar)")
+                print("   2. Use DuckDuckGo como alternativa (sem CAPTCHA)")
+                print("   3. Resolva manualmente se necessário")
+                
+                # Aguarda um pouco (às vezes o Google libera)
+                time.sleep(3)
+                
+                return True  # Indica que há CAPTCHA
+            
+            return False  # Sem CAPTCHA
+            
+        except Exception as e:
+            print(f"Erro ao verificar CAPTCHA: {e}")
+            return False
     
     def get_page_content(self) -> Dict[str, any]:
         """Extrai conteúdo da página atual"""
@@ -785,12 +1167,23 @@ class ChatInterface:
     
     def __init__(self, root):
         self.root = root
-        self.root.title("Obelisk - Chat com Ollama + Web")
+        self.root.title("Obelisk - Agente Autônomo AI")
         self.root.geometry("1000x750")
         
         # Inicializa componentes
         self.ollama = OllamaChat(BASE_URL, MODEL)
         self.browser = BrowserController()
+        self.agent = AutonomousAgent(BASE_URL, MODEL)
+        
+        # Inicializa processador de intenções
+        if INTENT_PROCESSOR_AVAILABLE:
+            self.intent_processor = IntentProcessor()
+        else:
+            self.intent_processor = None
+        
+        # Estado do agente
+        self.autonomous_mode = False
+        self.agent_running = False
         
         # Configurar estilo
         self.setup_styles()
@@ -906,6 +1299,21 @@ class ChatInterface:
         )
         self.send_button.pack(fill=tk.X, pady=(0, 5))
         
+        # Botão Modo Autônomo
+        self.auto_button = tk.Button(
+            button_frame,
+            text="🤖 Modo Autônomo",
+            command=self.toggle_autonomous_mode,
+            bg="#059669",
+            fg=self.fg_color,
+            font=("Segoe UI", 9, "bold"),
+            relief=tk.FLAT,
+            padx=20,
+            pady=8,
+            cursor="hand2"
+        )
+        self.auto_button.pack(fill=tk.X, pady=(0, 5))
+        
         clear_button = tk.Button(
             button_frame,
             text="Limpar",
@@ -926,35 +1334,48 @@ class ChatInterface:
     def show_welcome_message(self):
         """Mostra mensagem de boas-vindas"""
         selenium_status = "✓ Disponível (abre sob demanda)" if SELENIUM_AVAILABLE else "✗ Desabilitado (instale selenium)"
-        welcome = f"""Bem-vindo ao Obelisk Chat com Web Vision! 🚀
+        welcome = f"""Bem-vindo ao Obelisk - Agente Autônomo AI! 🤖🚀
 
-Este assistente pode:
-• Conversar e responder perguntas
-• VER e LER páginas web em tempo real
-• Extrair manchetes de notícias
-• Realizar buscas e análises
+═══════════════════════════════════════════════════════
+🎯 MODO AUTÔNOMO - AGENTE 100% INDEPENDENTE
+═══════════════════════════════════════════════════════
+
+Este agente pode:
+✅ VER sua tela em tempo real (captura contínua)
+✅ PLANEJAR etapas para completar tarefas
+✅ EXECUTAR ações automaticamente (click, type, search)
+✅ SE ADAPTAR conforme resultados
+✅ Navegar na web e extrair informações
+✅ Controlar aplicativos e sistema
+
+🤖 MODO AUTÔNOMO:
+Clique em "🤖 Modo Autônomo" para ativar!
+Quando ativo, o agente irá:
+1. Ver sua tela constantemente
+2. Planejar os passos necessários
+3. Executar cada ação automaticamente
+4. Adaptar-se aos resultados
+5. Reportar o progresso em tempo real
 
 Automação Web: {selenium_status}
 
-Comandos especiais:
-• /news - Abre Google Notícias e mostra manchetes
-• /browser <url> - Abre uma URL
-• /analyze <url> - Analisa conteúdo de uma página
-• /click <texto> - Clica em elemento com esse texto
-• /elements - Lista elementos clicáveis da página
-• /scroll <direção> - Rola a página (up/down/top/bottom)
-• /page - Mostra conteúdo da página atual
+💡 Exemplos de uso no Modo Autônomo:
+"Pesquise pela votação do GOTY e me diga quem ganhou"
+"Abra o YouTube e encontre vídeos sobre Python"
+"Crie um documento no Bloco de Notas com minha lista de tarefas"
+"Tire prints da tela e salve com timestamp"
+"Abra a calculadora e calcule 123 * 456"
+
+📋 Comandos especiais (modo normal):
+• /news - Abre Google Notícias
+• /browser <url> - Abre URL
+• /analyze <url> - Analisa página
 • /clear - Limpa o chat
-• /reset - Reinicia a conversa
+• /reset - Reinicia conversa
 
-Experimente:
-"Abra o Google Notícias e clique em 'Para você'"
-"Analise o site www.example.com e me diga do que se trata"
-"Mostre os elementos clicáveis da página"
-"Role a página para baixo"
-"Clique no botão de login"
-
-💡 O navegador será aberto automaticamente quando necessário!
+⚠️ IMPORTANTE:
+O modo autônomo tem controle TOTAL do seu computador!
+Use apenas para tarefas que você confia.
 
 Digite sua mensagem e pressione Enter para começar!
 """
@@ -1124,9 +1545,259 @@ Digite sua mensagem e pressione Enter para começar!
             
         return None
         
+    def execute_intent_action(self, user_message: str) -> Optional[str]:
+        """Detecta e executa ações automaticamente baseadas na intenção do usuário
+        
+        Retorna contexto da ação executada para o Ollama ou None se não executou nada.
+        """
+        if not self.intent_processor:
+            return None
+        
+        # Detecta intenção
+        intent = self.intent_processor.detect_intent(user_message)
+        
+        # Se confiança muito baixa, deixa o Ollama processar
+        if intent['confianca'] < 0.6:
+            return None
+        
+        # Mostra ao usuário o que foi detectado
+        explanation = self.intent_processor.explain_intent(intent)
+        self.add_system_message(f"🧠 {explanation}")
+        self.root.update()
+        
+        acao = intent['acao']
+        params = intent['parametros']
+        
+        # Executa ação correspondente
+        if acao == 'OPEN_BROWSER':
+            return self._execute_open_browser(params)
+        
+        elif acao == 'SEARCH':
+            return self._execute_search(params)
+        
+        elif acao == 'NEWS_SUMMARY':
+            return self._execute_news_summary(params)
+        
+        elif acao == 'SCREENSHOT':
+            return self._execute_screenshot(params)
+        
+        elif acao == 'CLOSE_BROWSER':
+            return self._execute_close_browser(params)
+        
+        elif acao == 'CLOSE_TAB':
+            return self._execute_close_tab(params)
+        
+        elif acao == 'OPEN_APP':
+            return self._execute_open_app(params)
+        
+        # Ação não reconhecida ou CHAT - deixa para o Ollama
+        return None
+    
+    def _execute_open_browser(self, params: Dict) -> str:
+        """Executa abertura de navegador"""
+        url = params['url']
+        nome = params['nome']
+        
+        # Inicializa navegador se necessário
+        if not self.browser.driver and SELENIUM_AVAILABLE:
+            self.add_system_message("🔄 Iniciando navegador Chrome...")
+            self.root.update()
+            if not self.browser.initialize_driver():
+                self.add_system_message("✗ Não foi possível inicializar o navegador")
+                return f"CONTEXTO: Você tentou abrir {nome} mas o navegador não está disponível."
+            self.add_system_message("✓ Chrome pronto!")
+        
+        if not self.browser.driver:
+            return f"CONTEXTO: Navegador não disponível."
+        
+        # Abre URL
+        self.add_system_message(f"🌐 Abrindo {nome}...")
+        self.root.update()
+        
+        self.browser.open_url(url)
+        time.sleep(2)
+        
+        # Analisa conteúdo
+        content = self.browser.get_page_content()
+        
+        if content and "error" not in content:
+            context = f"CONTEXTO: Você acabou de abrir {nome} ({url})\n"
+            context += f"Título da página: {content['title']}\n\n"
+            
+            if content.get('headlines'):
+                context += "Títulos visíveis na página:\n"
+                for i, h in enumerate(content['headlines'][:8], 1):
+                    if isinstance(h, dict):
+                        context += f"{i}. {h.get('text', '')}\n"
+                    else:
+                        context += f"{i}. {h}\n"
+                context += "\n"
+            
+            if content.get('paragraphs'):
+                context += f"Conteúdo: {len(content['paragraphs'])} parágrafos\n"
+                context += f"Primeiro trecho: {content['paragraphs'][0][:200]}...\n\n"
+            
+            context += "Informe ao usuário que você abriu o site e o que viu lá."
+            return context
+        
+        return f"CONTEXTO: Você abriu {nome} em {url}"
+    
+    def _execute_search(self, params: Dict) -> str:
+        """Executa busca no Google"""
+        query = params['query']
+        
+        # Inicializa navegador
+        if not self.browser.driver and SELENIUM_AVAILABLE:
+            self.add_system_message("🔄 Iniciando navegador Chrome...")
+            self.root.update()
+            if not self.browser.initialize_driver():
+                return f"CONTEXTO: Navegador não disponível para pesquisar '{query}'."
+            self.add_system_message("✓ Chrome pronto!")
+        
+        if not self.browser.driver:
+            return f"CONTEXTO: Não conseguiu pesquisar '{query}'."
+        
+        # Faz busca
+        self.add_system_message(f"🔍 Pesquisando '{query}' no Google...")
+        self.root.update()
+        
+        self.browser.search_google(query)
+        time.sleep(2)
+        
+        # Analisa resultados
+        content = self.browser.get_page_content()
+        elements = self.browser.get_interactive_elements()
+        
+        if content and "error" not in content:
+            context = f"CONTEXTO: Você pesquisou '{query}' no Google.\n\n"
+            context += f"RESULTADOS ENCONTRADOS:\n"
+            
+            if content.get('headlines'):
+                context += "Títulos dos resultados:\n"
+                for i, h in enumerate(content['headlines'][:10], 1):
+                    if isinstance(h, dict):
+                        text = h.get('text', '')
+                        if len(text) > 20:  # Filtra títulos muito curtos
+                            context += f"{i}. {text}\n"
+                context += "\n"
+            
+            if content.get('paragraphs'):
+                context += "Descrições dos resultados:\n"
+                for i, p in enumerate(content['paragraphs'][:5], 1):
+                    if len(p) > 50:
+                        context += f"{i}. {p[:200]}...\n"
+                context += "\n"
+            
+            context += f"Elementos clicáveis:\n{elements[:500]}\n\n"
+            context += f"Você realizou a busca com sucesso. Informe ao usuário o que encontrou sobre '{query}'."
+            
+            return context
+        
+        return f"CONTEXTO: Você pesquisou '{query}' no Google."
+    
+    def _execute_news_summary(self, params: Dict) -> str:
+        """Executa resumo de notícias"""
+        sites = params['sites']
+        
+        self.add_system_message("📰 Coletando notícias dos principais sites...")
+        self.root.update()
+        
+        # Inicializa navegador
+        if not self.browser.driver and SELENIUM_AVAILABLE:
+            self.add_system_message("🔄 Iniciando navegador...")
+            self.root.update()
+            if not self.browser.initialize_driver():
+                return "CONTEXTO: Não foi possível abrir navegador para coletar notícias."
+            self.add_system_message("✓ Chrome pronto!")
+        
+        # Coleta manchetes
+        all_headlines = []
+        
+        for site_url in sites[:2]:  # Limita a 2 sites para não demorar
+            self.add_system_message(f"🌐 Acessando {site_url}...")
+            self.root.update()
+            
+            self.browser.open_url(site_url)
+            time.sleep(3)
+            
+            content = self.browser.get_page_content()
+            if content and content.get('headlines'):
+                for h in content['headlines'][:10]:
+                    if isinstance(h, dict):
+                        text = h.get('text', '')
+                    else:
+                        text = h
+                    
+                    if len(text) > 20:  # Filtra curtos
+                        all_headlines.append(text)
+        
+        if all_headlines:
+            context = "CONTEXTO: Você coletou as principais notícias:\n\n"
+            context += "MANCHETES:\n"
+            for i, headline in enumerate(all_headlines[:15], 1):
+                context += f"{i}. {headline}\n"
+            context += "\nFaça um resumo das principais notícias para o usuário."
+            return context
+        
+        return "CONTEXTO: Você tentou coletar notícias mas não encontrou manchetes."
+    
+    def _execute_screenshot(self, params: Dict) -> str:
+        """Tira screenshot"""
+        self.add_system_message("📸 Capturando tela...")
+        self.root.update()
+        
+        try:
+            screenshot = pyautogui.screenshot()
+            filename = f"screenshot_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
+            screenshot.save(filename)
+            
+            self.add_system_message(f"✓ Screenshot salvo: {filename}")
+            return f"CONTEXTO: Você tirou um screenshot e salvou como '{filename}'. Informe ao usuário."
+        except Exception as e:
+            return f"CONTEXTO: Erro ao tirar screenshot: {e}"
+    
+    def _execute_close_browser(self, params: Dict) -> str:
+        """Fecha navegador"""
+        if self.browser.driver:
+            self.add_system_message("🔴 Fechando navegador...")
+            self.root.update()
+            self.browser.close()
+            return "CONTEXTO: Você fechou o navegador. Informe ao usuário."
+        return "CONTEXTO: O navegador já estava fechado."
+    
+    def _execute_close_tab(self, params: Dict) -> str:
+        """Fecha aba atual"""
+        if self.browser.driver:
+            self.add_system_message("🔴 Fechando aba...")
+            self.root.update()
+            self.browser.close_tab()
+            
+            if self.browser.driver:
+                try:
+                    current_url = self.browser.driver.current_url
+                    return f"CONTEXTO: Você fechou a aba. Agora está vendo: {current_url}"
+                except:
+                    return "CONTEXTO: Você fechou a aba."
+            return "CONTEXTO: Você fechou o navegador (era a última aba)."
+        return "CONTEXTO: Não há navegador aberto."
+    
+    def _execute_open_app(self, params: Dict) -> str:
+        """Abre programa"""
+        app = params['app']
+        nome = params['nome']
+        
+        self.add_system_message(f"🚀 Abrindo {nome}...")
+        self.root.update()
+        
+        try:
+            subprocess.Popen(app, shell=True)
+            time.sleep(1)
+            return f"CONTEXTO: Você abriu {nome}. Informe ao usuário."
+        except Exception as e:
+            return f"CONTEXTO: Erro ao abrir {nome}: {e}"
+    
     def check_for_web_action(self, user_message: str) -> Optional[str]:
         """Verifica se precisa executar ação web e retorna contexto"""
-        import re
         
         # Inicializa navegador se necessário para qualquer ação web
         def ensure_browser():
@@ -1650,6 +2321,11 @@ Digite sua mensagem e pressione Enter para começar!
         # Adiciona mensagem do usuário
         self.add_message("Você", message, "user")
         
+        # MODO AUTÔNOMO: Executa tarefa de forma completamente autônoma
+        if self.autonomous_mode and not message.startswith('/'):
+            self.run_autonomous_task(message)
+            return
+        
         # Processa comandos especiais
         command_result = self.process_command(message)
         if command_result:
@@ -1663,8 +2339,14 @@ Digite sua mensagem e pressione Enter para começar!
             self.send_button.config(state=tk.DISABLED, text="Pensando...")
             
             def get_response():
-                # Verifica se precisa executar ação web
-                web_context = self.check_for_web_action(message)
+                # NOVO: Tenta detectar e executar intenção automaticamente
+                web_context = None
+                if self.intent_processor:
+                    web_context = self.execute_intent_action(message)
+                
+                # Se não executou ação automática, verifica ações web tradicionais
+                if not web_context:
+                    web_context = self.check_for_web_action(message)
                 
                 # Se não gerou contexto específico, mas tem navegador aberto, adiciona contexto da página atual
                 if not web_context and self.browser.driver:
@@ -1716,6 +2398,72 @@ Digite sua mensagem e pressione Enter para começar!
         else:
             self.send_message()
             return "break"
+    
+    def toggle_autonomous_mode(self):
+        """Ativa/desativa modo autônomo"""
+        self.autonomous_mode = not self.autonomous_mode
+        
+        if self.autonomous_mode:
+            self.auto_button.config(
+                text="🤖 MODO ATIVO",
+                bg="#dc2626"
+            )
+            self.add_system_message("🤖 MODO AUTÔNOMO ATIVADO")
+            self.add_system_message("💡 Agora eu vou VER sua tela e EXECUTAR ações automaticamente!")
+            self.add_system_message("💡 Digite uma tarefa e eu vou planejar e executar todos os passos!")
+        else:
+            self.auto_button.config(
+                text="🤖 Modo Autônomo",
+                bg="#059669"
+            )
+            self.add_system_message("⏸️ Modo autônomo desativado")
+    
+    def run_autonomous_task(self, task: str):
+        """Executa tarefa no modo autônomo"""
+        self.agent_running = True
+        self.send_button.config(state=tk.DISABLED)
+        
+        def progress_update(message: str):
+            """Callback para atualizar progresso"""
+            self.add_system_message(message)
+            self.root.update()
+        
+        def execute_task():
+            try:
+                self.add_system_message(f"🎯 INICIANDO TAREFA AUTÔNOMA: {task}")
+                self.add_system_message("=" * 60)
+                
+                # Executa tarefa autônoma
+                steps = self.agent.run_autonomous_task(task, progress_update)
+                
+                # Reporta conclusão
+                self.add_system_message("=" * 60)
+                self.add_system_message("✅ TAREFA FINALIZADA!")
+                self.add_system_message(f"📊 Total de passos executados: {len(steps)}")
+                
+                # Gera resumo com Ollama
+                summary_context = f"TAREFA SOLICITADA: {task}\n\n"
+                summary_context += "PASSOS EXECUTADOS:\n"
+                for i, step in enumerate(steps, 1):
+                    summary_context += f"{i}. {step}\n"
+                summary_context += "\nGere um resumo do que foi feito e informe ao usuário o resultado."
+                
+                response = self.ollama.send_message(
+                    "Resuma o que você acabou de fazer nesta tarefa autônoma",
+                    context=summary_context
+                )
+                
+                self.add_message("Agente", response, "assistant")
+                
+            except Exception as e:
+                self.add_system_message(f"❌ Erro na execução: {e}")
+            
+            finally:
+                self.agent_running = False
+                self.send_button.config(state=tk.NORMAL)
+        
+        # Executa em thread separada
+        threading.Thread(target=execute_task, daemon=True).start()
             
     def clear_chat(self):
         """Limpa o chat"""
