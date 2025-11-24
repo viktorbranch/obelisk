@@ -72,16 +72,22 @@
 
 3. **Run Obelisk**
    ```bash
-   # Windows
-   start_obelisk_chat.bat
+   # Windows (recommended)
+   scripts\start_obelisk_chat.bat
+
+   # Direct Python execution
+   python src/obelisk_agent.py
+   
+   # Or as module
+   python -m src.obelisk_agent
 
    # Linux/macOS
-   python examples/ollama_chat_web.py
+   python3 src/obelisk_agent.py
    ```
 
 4. **Optional: Create desktop shortcut** (Windows)
    ```powershell
-   powershell -ExecutionPolicy Bypass -File create_shortcut.ps1
+   powershell -ExecutionPolicy Bypass -File scripts/create_shortcut.ps1
    ```
 
 ## 📖 Usage Examples

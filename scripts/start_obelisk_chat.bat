@@ -1,14 +1,19 @@
 @echo off
 title Obelisk Chat - Iniciando...
-cd /d "%~dp0"
+cd /d "%~dp0\.."
 echo.
 echo ============================================
-echo    OBELISK CHAT + WEB VISION
+echo    OBELISK AI - AUTONOMOUS AGENT
 echo ============================================
 echo.
 echo Iniciando aplicacao...
 echo.
-C:\Python313\python.exe examples\ollama_chat_web.py
+python src\obelisk_agent.py
+if errorlevel 1 (
+    echo.
+    echo Tentando com python3...
+    python3 src\obelisk_agent.py
+)
 echo.
 echo Aplicacao encerrada.
 pause

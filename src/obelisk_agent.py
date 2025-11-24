@@ -10,7 +10,9 @@ Features:
     - Real-time screen monitoring and analysis
 
 Usage:
-    python examples/ollama_chat_web.py
+    python -m src.obelisk_agent
+    # or
+    python src/obelisk_agent.py
 
 Requirements:
     - Python 3.8+
@@ -41,8 +43,15 @@ import requests
 
 # Import do processador de intenções
 try:
-    from intent_processor import IntentProcessor
+    from src.core.intent_processor import IntentProcessor
     INTENT_PROCESSOR_AVAILABLE = True
+except ImportError:
+    try:
+        from core.intent_processor import IntentProcessor
+        INTENT_PROCESSOR_AVAILABLE = True
+    except ImportError:
+        INTENT_PROCESSOR_AVAILABLE = False
+        print("⚠️  intent_processor.py não encontrado - usando modo básico")
 except ImportError:
     INTENT_PROCESSOR_AVAILABLE = False
     print("⚠️  intent_processor.py não encontrado - usando modo básico")

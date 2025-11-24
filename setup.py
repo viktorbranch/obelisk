@@ -8,16 +8,18 @@ setup(
     long_description_content_type="text/markdown",
     author="Obelisk AI",
     author_email="contact@obelisk-ai.dev",
-    packages=find_packages(),
+    packages=find_packages(where="src"),
+    package_dir={"": "src"},
     install_requires=[
         "requests>=2.31.0",
         "selenium>=4.15.0",
         "beautifulsoup4>=4.12.0",
+        "lxml>=4.9.0",
         "pyautogui>=0.9.54",
         "pillow>=10.0.0",
     ],
     extras_require={
-        "dev": ["black", "pytest"],
+        "dev": ["black", "pytest", "flake8"],
         "full": [
             "numpy",
             "pandas",
@@ -29,7 +31,7 @@ setup(
     },
     entry_points={
         "console_scripts": [
-            "obelisk=examples.ollama_chat_web:main",
+            "obelisk=src.obelisk_agent:main",
         ],
     },
     classifiers=[
@@ -42,6 +44,7 @@ setup(
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
+        "Programming Language :: Python :: 3.13",
         "License :: OSI Approved :: MIT License",
         "Operating System :: Microsoft :: Windows",
         "Operating System :: POSIX :: Linux",
