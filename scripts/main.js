@@ -61,10 +61,13 @@ function createChat() {
     }
     
     const { width, height } = screen.getPrimaryDisplay().workAreaSize;
-    const targetX = width - 510 - 8;
+    const sidebarWidth = 8;
+    const chatWidth = 450;
+    const margin = 25;
+    const targetX = width - chatWidth - sidebarWidth - margin;
     
     chatWindow = new BrowserWindow({
-        width: 510,
+        width: chatWidth,
         height: height,
         x: width,
         y: 0,
@@ -132,7 +135,7 @@ ipcMain.on('toggle-chat', () => {
     if (chatWindow && chatWindow.isVisible()) {
         // Fecha com animação
         const { width } = screen.getPrimaryDisplay().workAreaSize;
-        const startX = width - 510 - 8;
+        const startX = width - 450 - 8 - 25;
         const duration = 250;
         const steps = 25;
         const stepSize = (width - startX) / steps;
@@ -162,7 +165,7 @@ ipcMain.on('toggle-chat', () => {
 ipcMain.on('close-chat', () => {
     if (chatWindow) {
         const { width } = screen.getPrimaryDisplay().workAreaSize;
-        const startX = width - 510 - 8;
+        const startX = width - 450 - 8 - 25;
         const duration = 250;
         const steps = 25;
         const stepSize = (width - startX) / steps;
