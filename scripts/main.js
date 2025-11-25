@@ -64,7 +64,7 @@ function createChat() {
     const sidebarWidth = 10;
     const chatWidth = 450;
     const margin = 0;
-    const targetX = width - chatWidth - sidebarWidth - margin;
+    const targetX = width - chatWidth;
     
     chatWindow = new BrowserWindow({
         width: chatWidth,
@@ -142,7 +142,7 @@ ipcMain.on('toggle-chat', () => {
         const chatWidth = 450;
         const sidebarWidth = 10;
         const margin = 0;
-        const startX = width - chatWidth - sidebarWidth - margin;
+        const startX = width - chatWidth;
         const targetX = width;
         
         const duration = 250;
@@ -171,7 +171,7 @@ ipcMain.on('toggle-chat', () => {
         const chatWidth = 450;
         const sidebarWidth = 10;
         const margin = 0;
-        const targetX = width - chatWidth - sidebarWidth - margin;
+        const targetX = width - chatWidth;
         
         chatWindow.setPosition(width, 0);
         chatWindow.show();
@@ -207,7 +207,7 @@ ipcMain.on('close-chat', () => {
         const chatWidth = 450;
         const sidebarWidth = 10;
         const margin = 0;
-        const startX = width - chatWidth - sidebarWidth - margin;
+        const startX = width - chatWidth;
         const targetX = width;
         
         const duration = 250;

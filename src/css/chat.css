@@ -488,9 +488,18 @@ body {
         inset -3px -3px 6px rgba(50, 50, 50, 0.2);
 }
 
+
 .send-btn:disabled {
     opacity: 0.5;
-    cursor: not-allowed;
+    cursor: pointer;
+}
+
+.send-btn.stop {
+    background: #1a1a1a;
+    color: #9333ea;
+    border: 2px solid #9333ea;
+    box-shadow: 0 0 0 2px #9333ea33;
+    transition: all 0.2s;
 }
 
 ::-webkit-scrollbar {

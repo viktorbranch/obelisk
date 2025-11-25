@@ -18,16 +18,15 @@ class ObeliskAgent {
     async sendMessage(message) {
         // Adiciona contexto para respostas curtas
         const optimizedMessage = `${message}\n\n(Responda de forma BREVE e DIRETA em até 2 linhas)`;
-        
         this.conversationHistory.push({
             role: 'user',
             content: optimizedMessage
         });
-
         try {
-            const response = await axios.post(`${this.ollamaUrl}/api/generate`, {
+            // Tenta usar /api/chat para manter contexto
+            const response = await axios.post(`${this.ollamaUrl}/api/chat`, {
                 model: this.model,
-                prompt: optimizedMessage,
+                messages: this.conversationHistory,
                 stream: false,
                 options: {
                     num_predict: 100,
@@ -38,16 +37,39 @@ class ObeliskAgent {
             }, {
                 timeout: 30000
             });
-
-            const assistantMessage = response.data.response;
-            
+            const assistantMessage = response.data.message.content;
             this.conversationHistory.push({
                 role: 'assistant',
                 content: assistantMessage
             });
-
             return assistantMessage.trim();
         } catch (error) {
+            // Se der 404, tenta fallback para /api/generate (sem contexto)
+            if (error.response && error.response.status === 404) {
+                try {
+                    const response = await axios.post(`${this.ollamaUrl}/api/generate`, {
+                        model: this.model,
+                        prompt: optimizedMessage,
+                        stream: false,
+                        options: {
+                            num_predict: 100,
+                            temperature: 0.7,
+                            top_p: 0.9,
+                            num_ctx: 2048
+                        }
+                    }, {
+                        timeout: 30000
+                    });
+                    const assistantMessage = response.data.response;
+                    this.conversationHistory.push({
+                        role: 'assistant',
+                        content: assistantMessage
+                    });
+                    return assistantMessage.trim();
+                } catch (err2) {
+                    throw new Error(`❌ Erro Ollama: ${err2.message}`);
+                }
+            }
             if (error.code === 'ECONNABORTED') {
                 throw new Error('⏱️ Timeout (30s). O modelo pode estar carregando pela primeira vez. Tente novamente.');
             }
@@ -257,6 +279,9 @@ class IntentProcessor {
             'gemini': { url: 'https://gemini.google.com', name: 'Gemini' }
         };
 
+        // Novo: padrão para vídeos do YouTube (mais flexível)
+        this.youtubeVideoPattern = /(?:ver|abrir|assistir|mostrar|tocar|play)?\s*(?:um|o)?\s*(?:vídeo|video)?\s*(?:do|de)?\s*([\w\d]+)?\s*(?:sobre|do|pra|para)?\s*([\w\d\s]+)?(?:no youtube)?/i;
+
         this.programs = {
             'calculadora': { cmd: 'calc', name: 'Calculadora' },
             'calc': { cmd: 'calc', name: 'Calculadora' },
@@ -291,6 +316,24 @@ class IntentProcessor {
 
     detectIntent(message) {
         const msg = message.toLowerCase().trim();
+
+        // Novo: Detecta pedido de vídeo do YouTube
+        const ytMatch = this.youtubeVideoPattern.exec(message);
+        if (ytMatch && (ytMatch[1] || ytMatch[2] || message.toLowerCase().includes('youtube'))) {
+            // Monta query de busca
+            let query = '';
+            if (ytMatch[1]) query += ytMatch[1] + ' ';
+            if (ytMatch[2]) query += ytMatch[2];
+            query = query.trim();
+            if (!query) query = message.replace(/(abre|abrir|ver|assistir|mostrar|tocar|play|vídeo|video|pra|para|no|do|de|um|o|youtube)/gi, '').trim();
+            if (!query) query = 'brksedu'; // fallback para algo genérico
+            const url = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
+            return {
+                action: 'OPEN_BROWSER',
+                params: { url, name: `YouTube: ${query}` },
+                confidence: 0.97
+            };
+        }
 
         // Detecta abertura de site
         for (const pattern of this.intentPatterns.openSite) {

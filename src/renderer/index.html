@@ -87,6 +87,7 @@
         const closeBtn = document.getElementById('closeBtn');
         
         let isProcessing = false;
+        let cancelController = null;
         
         // Focus automático
         messageInput.focus();
@@ -104,10 +105,16 @@
             }
         });
         
-        // Botão enviar
+
+        // Botão enviar/stop
         sendBtn.addEventListener('click', () => {
             if (!isProcessing) {
                 sendMessage();
+            } else {
+                // Cancelar resposta
+                if (cancelController) {
+                    cancelController.abort();
+                }
             }
         });
         
@@ -172,37 +179,31 @@
         
         async function sendMessage() {
             const message = messageInput.value.trim();
-            
             if (!message || isProcessing) return;
-            
             isProcessing = true;
-            sendBtn.disabled = true;
-            
+            sendBtn.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9333ea" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="3"/></svg>';
+            sendBtn.classList.add('stop');
+            sendBtn.disabled = false;
+            cancelController = new AbortController();
             // Marca tempo de início
             const startTime = Date.now();
-            
             // Adiciona mensagem do usuário
             addMessage(message, true);
             messageInput.value = '';
-            
             // Mostra indicador com status
             showTyping();
-            
             try {
                 // Timeout de 35 segundos (primeira execução pode demorar)
                 const timeout = new Promise((_, reject) => 
                     setTimeout(() => reject(new Error('Timeout: mais de 35s esperando resposta')), 35000)
                 );
-                
+                // Chamada sem passar signal (evita erro de clone)
                 const messagePromise = ipcRenderer.invoke('send-message', message);
                 const response = await Promise.race([messagePromise, timeout]);
-                
                 // Calcula tempo de resposta
                 const responseTime = ((Date.now() - startTime) / 1000).toFixed(1);
                 console.log(`⏱️ Tempo de resposta: ${responseTime}s`);
-                
                 hideTyping();
-                
                 if (response.status === 'success') {
                     addMessage(response.message);
                 } else {
@@ -210,12 +211,20 @@
                 }
             } catch (error) {
                 hideTyping();
-                if (error.message.includes('Timeout')) {
+                if (error.name === 'AbortError') {
+                    addMessage('❌ Resposta cancelada pelo usuário.');
+                } else if (error.message.includes('Timeout')) {
                     addMessage('❌ Timeout: O Ollama demorou muito para responder. Verifique se o serviço está rodando (ollama serve).');
                 } else {
                     addMessage('❌ Erro ao processar mensagem: ' + error.message);
                 }
                 console.error(error);
+            } finally {
+                isProcessing = false;
+                sendBtn.innerHTML = '➤';
+                sendBtn.classList.remove('stop');
+                sendBtn.disabled = false;
+                cancelController = null;
             }
         }
         
